@@ -29,11 +29,12 @@
     }, networkFilters,["requestBody"]);
 
     chrome.webRequest.onCompleted.addListener((details) => {
-        const { tabId, requestId, timeStamp , 	statusCode,responseHeaders} = details;
+        const { tabId, requestId, timeStamp ,responseHeaders} = details;
         if (!tabStorage.hasOwnProperty(tabId) || !tabStorage[tabId].requests.hasOwnProperty(requestId)) {
             return;
         }
-
+        let responseHeader={...responseHeaders};
+        console.log(responseHeader);
         const request = tabStorage[tabId].requests[requestId];
 
         Object.assign(request, {
@@ -42,8 +43,7 @@
             status: 'complete'
         });
         console.log(tabStorage[tabId].requests[details.requestId]);
-        console.log(statusCode+" "+responseHeaders);
-    }, networkFilters);
+    }, networkFilters,["responseHeaders"]);
 
     chrome.webRequest.onErrorOccurred.addListener((details)=> {
         const { tabId, requestId, timeStamp } = details;
