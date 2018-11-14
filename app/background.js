@@ -1,21 +1,21 @@
+
 // Hepler functions
-function convertUrlToUri(urlString){  
-    try{
+function convertUrlToUri(urlString) {
+    try {
         var paraArray = urlString.split("?")[1].split("&");
         var uri = {};
-        for(let para = 0; para < paraArray.length; para++){
+        for (let para = 0; para < paraArray.length; para++) {
             let key = paraArray[para].split("=")[0];
             let value = paraArray[para].split("=")[1];
             uri[key] = value;
         }
         return uri;
-    } catch(error){
-        return ;
+    } catch (error) {
+        return;
     }
-    
-}
 
-(function() {
+}
+(function () {
     const tabStorage = {};
     const networkFilters = {
         urls: [
@@ -24,12 +24,15 @@ function convertUrlToUri(urlString){
     };
     // Capture HTTP request
     chrome.webRequest.onBeforeRequest.addListener((details) => {
+        // var FileSaver = require('file-saver');
+        // var blob = new Blob(["Hello, world!"], { type: "text/plain;charset=utf-8" });
+        // FileSaver.saveAs(blob, "hello world.txt");
         const { tabId, requestId, url, timeStamp, method, type, frameId, parentFrameId } = details;
         if (!tabStorage.hasOwnProperty(tabId)) {
             return;
         }
         // Capture HTTP request, action method = POST
-        if(details.method == "POST"){            
+        if (details.method == "POST") {
             var data = details.requestBody.formData;
             console.log("Form Data:");
             console.log(data);
@@ -58,23 +61,23 @@ function convertUrlToUri(urlString){
         var urlString = tabStorage[tabId].requests[requestId].url;
         console.log("URL:");
         //console.log(typeof (urlString));
-        console.log(urlString);        
+        console.log(urlString);
         var uri = {};
-        uri = convertUrlToUri(urlString);        
+        uri = convertUrlToUri(urlString);
         console.log("Request infomation:");
         console.log(tabStorage[tabId].requests[requestId]);
         //console.log(paraArray);
         console.log("Uri:");
         console.log(uri);
-        
-    }, networkFilters,["requestBody"]);
+
+    }, networkFilters, ["requestBody"]);
 
     chrome.webRequest.onCompleted.addListener((details) => {
         const { tabId, requestId, timeStamp, responseHeaders } = details;
         if (!tabStorage.hasOwnProperty(tabId) || !tabStorage[tabId].requests.hasOwnProperty(requestId)) {
             return;
         }
-        let responseHeader = {...responseHeaders};
+        let responseHeader = { ...responseHeaders };
         console.log("Response:");
         console.log(responseHeader);
         const request = tabStorage[tabId].requests[requestId];
@@ -88,7 +91,7 @@ function convertUrlToUri(urlString){
     }, networkFilters, ["responseHeaders"]);
 
     // When errors
-    chrome.webRequest.onErrorOccurred.addListener((details)=> {
+    chrome.webRequest.onErrorOccurred.addListener((details) => {
         const { tabId, requestId, timeStamp } = details;
         if (!tabStorage.hasOwnProperty(tabId) || !tabStorage[tabId].requests.hasOwnProperty(requestId)) {
             return;
