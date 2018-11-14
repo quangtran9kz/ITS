@@ -1,5 +1,42 @@
+/**************************************************************/
+// User story: 
+/**************************************************************/
+/*
+// As a developer, 
+// I want to capture HTTP request. 
+// So that export parameters of http request 
+//  into JSON file follow structure define by myself.
+*/
 
-// Hepler functions
+// **********************************************************//
+// ****************** Helper functions **********************//
+// **********************************************************//
+
+// Export objects {key: "value"} to JSON file
+/*
+* Input: Object with format JSON {key: "value", key: "value"}
+* Parameters: None
+* Output: JSON file
+*    
+*/
+function exportObjectToJSONFile(items){
+     // Convert object to a string.
+     var result = JSON.stringify(items);
+
+     // Save as file
+     var url = 'data:application/json;base64,' + btoa(result);
+     chrome.downloads.download({
+         url: url,
+         filename: 'filename_of_exported_file.json'
+     });
+}
+// Convert URL String to URI Object {key : "value"} 
+/*
+* Input: URL
+* Parameters: URL string
+* Output: Object JSON {key1: "value1", key2: "value2"}
+*
+*/
 function convertUrlToUri(urlString) {
     try {
         var paraArray = urlString.split("?")[1].split("&");
@@ -23,10 +60,7 @@ function convertUrlToUri(urlString) {
         ]
     };
     // Capture HTTP request
-    chrome.webRequest.onBeforeRequest.addListener((details) => {
-        // var FileSaver = require('file-saver');
-        // var blob = new Blob(["Hello, world!"], { type: "text/plain;charset=utf-8" });
-        // FileSaver.saveAs(blob, "hello world.txt");
+    chrome.webRequest.onBeforeRequest.addListener((details) => { 
         const { tabId, requestId, url, timeStamp, method, type, frameId, parentFrameId } = details;
         if (!tabStorage.hasOwnProperty(tabId)) {
             return;
@@ -35,16 +69,7 @@ function convertUrlToUri(urlString) {
         if (details.method == "POST") {
             var data = details.requestBody.formData;
             console.log("Form Data:");
-            console.log(data);
-            /*
-            if(data) {
-                Object.keys(data).forEach(key => {
-                    data[key].forEach(value => {
-                        console.log(value);
-                    });
-                });
-            }
-            */
+            console.log(data);           
         }
         // Capture HTTP request, action method = GET
         tabStorage[tabId].requests[requestId] = {
@@ -60,15 +85,17 @@ function convertUrlToUri(urlString) {
         // split URL
         var urlString = tabStorage[tabId].requests[requestId].url;
         console.log("URL:");
-        //console.log(typeof (urlString));
+        // console.log(typeof (urlString));
         console.log(urlString);
-        var uri = {};
-        uri = convertUrlToUri(urlString);
+        var parameters = {};
+        parameters = convertUrlToUri(urlString);
         console.log("Request infomation:");
         console.log(tabStorage[tabId].requests[requestId]);
         //console.log(paraArray);
-        console.log("Uri:");
-        console.log(uri);
+        console.log("Parameters:");
+        console.log(parameters);
+        var items = { "key": "1", "key2":"2"};
+        exportObjectToJSONFile(items);
 
     }, networkFilters, ["requestBody"]);
 

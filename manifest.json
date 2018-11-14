@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
 
-  "name": "My Extension",
+  "name": "ITS Interceptor",
   "description": "This extension is capture HTTP request, response and paramerter.Then save all to file",
   "version": "0.0.1",
 
@@ -19,6 +19,8 @@
   },
   "permissions": [
     "webRequest",
+    "webRequestBlocking",
+    "downloads",
     "<all_urls>"
   ]
 }
