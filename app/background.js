@@ -12,9 +12,12 @@
             return;
         }
         if(details.method=="POST"){
-            // var {pass}=details.requestBody.formData;
-            var data=details.requestBody.formData;
+           try {
+            var data=details.requestBody.formData !==undefined ?details.requestBody.formData: "";
             console.log(data);
+           } catch (error) {
+               console.log(error);
+           }
         }
         tabStorage[tabId].requests[requestId] = {
             requestId: requestId,
@@ -26,7 +29,7 @@
     }, networkFilters,["requestBody"]);
 
     chrome.webRequest.onCompleted.addListener((details) => {
-        const { tabId, requestId, timeStamp } = details;
+        const { tabId, requestId, timeStamp , 	statusCode,responseHeaders} = details;
         if (!tabStorage.hasOwnProperty(tabId) || !tabStorage[tabId].requests.hasOwnProperty(requestId)) {
             return;
         }
@@ -39,6 +42,7 @@
             status: 'complete'
         });
         console.log(tabStorage[tabId].requests[details.requestId]);
+        console.log(statusCode+" "+responseHeaders);
     }, networkFilters);
 
     chrome.webRequest.onErrorOccurred.addListener((details)=> {
