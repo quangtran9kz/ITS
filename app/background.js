@@ -67,9 +67,14 @@ function convertUrlToUri(urlString) {
         }
         // Capture HTTP request, action method = POST
         if (details.method == "POST") {
-            var data = details.requestBody.formData;
-            console.log("Form Data:");
-            console.log(data);           
+            try {
+                var data = details.requestBody.formData;
+                console.log("Form Data:");
+                console.log(data);    
+            } catch (error) {
+                console.log(error);
+            }
+                
         }
         // Capture HTTP request, action method = GET
         tabStorage[tabId].requests[requestId] = {
@@ -88,14 +93,14 @@ function convertUrlToUri(urlString) {
         // console.log(typeof (urlString));
         console.log(urlString);
         var parameters = {};
-        parameters = convertUrlToUri(urlString);
+        parameters = convertUrlToUri(urlString)!=undefined?convertUrlToUri(urlString):"none";
         console.log("Request infomation:");
         console.log(tabStorage[tabId].requests[requestId]);
         //console.log(paraArray);
         console.log("Parameters:");
         console.log(parameters);
-        var items = { "key": "1", "key2":"2"};
-        exportObjectToJSONFile(items);
+        //var items = { "key": "1", "key2":"2"};
+        // exportObjectToJSONFile(items);
 
     }, networkFilters, ["requestBody"]);
 
@@ -105,7 +110,7 @@ function convertUrlToUri(urlString) {
             return;
         }
         let responseHeader = { ...responseHeaders };
-        console.log("Response:");
+        console.log("Response Header:");
         console.log(responseHeader);
         const request = tabStorage[tabId].requests[requestId];
 
@@ -151,15 +156,16 @@ function convertUrlToUri(urlString) {
         tabStorage[tabId] = null;
     });
 
-    chrome.runtime.onMessage.addListener((msg, sender, response) => {
-        switch (msg.type) {
-            case 'popupInit':
-                response(tabStorage[msg.tabId]);
-                break;
-            default:
-                response('unknown request');
-                break;
-        }
-    });
+    // chrome.runtime.onMessage.addListener((msg, sender, response) => {
+    //     switch (msg.type) {
+    //         case 'popupInit':
+    //             response(tabStorage[msg.tabId]);
+    //             break;
+    //         default:
+    //             response('unknown request');
+    //             break;
+    //     }
+    // });
+    
 }());
 
