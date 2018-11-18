@@ -19,9 +19,10 @@
 * Output: JSON file
 *    
 */
-function exportObjectToJSONFile(items){
+var requestHeader=[];
+function exportObjectToJSONFile(){
      // Convert object to a string.
-     var result = JSON.stringify(items);
+     var result = JSON.stringify(requestHeader);
 
      // Save as file
      var url = 'data:application/json;base64,' + btoa(result);
@@ -89,18 +90,19 @@ function convertUrlToUri(urlString) {
         };
         // split URL
         var urlString = tabStorage[tabId].requests[requestId].url;
-        console.log("URL:");
+        //console.log("URL:");
         // console.log(typeof (urlString));
-        console.log(urlString);
-        var parameters = {};
-        parameters = convertUrlToUri(urlString)!=undefined?convertUrlToUri(urlString):"none";
-        console.log("Request infomation:");
-        console.log(tabStorage[tabId].requests[requestId]);
+        //console.log(urlString);
+        //var parameters = {};
+        //parameters = convertUrlToUri(urlString)!=undefined?convertUrlToUri(urlString):"none";
+        //console.log("Request infomation:");
+        //console.log(tabStorage[tabId].requests[requestId]);
         //console.log(paraArray);
-        console.log("Parameters:");
-        console.log(parameters);
+        //console.log("Parameters:");
+        //console.log(parameters);
         //var items = { "key": "1", "key2":"2"};
         // exportObjectToJSONFile(items);
+        defineData(tabStorage[tabId].requests[requestId],"request");
 
     }, networkFilters, ["requestBody"]);
 
@@ -166,9 +168,19 @@ function convertUrlToUri(urlString) {
     //             break;
     //     }
     // });
+    function defineData(data,type){
+        if(type==="request")
+        {
+        console.log(data);
+        }
+    }
     chrome.runtime.onMessage.addListener(function(msg, sender, sendResponse) {
         console.log("Received %o from %o, frame", msg, sender.tab, sender.frameId);
         sendResponse("send response!");
+        if(msg.action==="save")
+        {
+            //button Save làm gì ???
+        }
     });
 }());
 
