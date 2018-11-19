@@ -10,8 +10,6 @@ window.onload=()=>{
         Save.onclick=()=>{
             chrome.runtime.sendMessage({action:"save"})
         }
-    } catch (error) {
-        
+    } catch (error) {   
     }
-   
 }

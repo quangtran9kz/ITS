@@ -19,18 +19,22 @@
 * Output: JSON file
 *    
 */
-var requestHeader=[];
-function exportObjectToJSONFile(){
-     // Convert object to a string.
-     var result = JSON.stringify(requestHeader);
 
-     // Save as file
-     var url = 'data:application/json;base64,' + btoa(result);
-     chrome.downloads.download({
-         url: url,
-         filename: 'data.json'
-     });
-     requestHeader.length=0;
+var requestHeader = [];
+var bigData={};
+var responseHeader = [];
+function exportObjectToJSONFile() {
+    // Convert object to a string.
+    var result = JSON.stringify(bigData);
+
+    // Save as file
+    var url = 'data:application/json;base64,' + btoa(result);
+    chrome.downloads.download({
+        url: url,
+        filename: 'data.json'
+    });
+    requestHeader.length = 0;
+    responseHeader.length=0;
 }
 // Convert URL String to URI Object {key : "value"} 
 /*
@@ -62,7 +66,7 @@ function convertUrlToUri(urlString) {
         ]
     };
     // Capture HTTP request
-    chrome.webRequest.onBeforeRequest.addListener((details) => { 
+    chrome.webRequest.onBeforeRequest.addListener((details) => {
         const { tabId, requestId, url, timeStamp, method, type, frameId, parentFrameId } = details;
         if (!tabStorage.hasOwnProperty(tabId)) {
             return;
@@ -71,12 +75,13 @@ function convertUrlToUri(urlString) {
         if (details.method == "POST") {
             try {
                 var data = details.requestBody.formData;
-                console.log("Form Data:");
-                console.log(data);    
+                // console.log("Form Data:");
+                 console.log(data);
+
             } catch (error) {
                 console.log(error);
             }
-                
+
         }
         // Capture HTTP request, action method = GET
         tabStorage[tabId].requests[requestId] = {
@@ -87,7 +92,8 @@ function convertUrlToUri(urlString) {
             url: url,
             startTime: timeStamp,
             parentFrameId: parentFrameId,
-            status: 'pending'
+            status: 'pending',
+            postdata:data
         };
         // split URL
         var urlString = tabStorage[tabId].requests[requestId].url;
@@ -103,7 +109,7 @@ function convertUrlToUri(urlString) {
         //console.log(parameters);
         //var items = { "key": "1", "key2":"2"};
         // exportObjectToJSONFile(items);
-        defineData(tabStorage[tabId].requests[requestId],"request");
+        defineData(tabStorage[tabId].requests[requestId], "request");
 
     }, networkFilters, ["requestBody"]);
 
@@ -112,9 +118,9 @@ function convertUrlToUri(urlString) {
         if (!tabStorage.hasOwnProperty(tabId) || !tabStorage[tabId].requests.hasOwnProperty(requestId)) {
             return;
         }
-        let responseHeader = { ...responseHeaders };
+        let response = { ...responseHeaders };
         console.log("Response Header:");
-        console.log(responseHeader);
+        console.log(response);
         const request = tabStorage[tabId].requests[requestId];
 
         Object.assign(request, {
@@ -123,6 +129,7 @@ function convertUrlToUri(urlString) {
             status: 'complete'
         });
         console.log(tabStorage[tabId].requests[details.requestId]);
+        defineData(response,"response");
     }, networkFilters, ["responseHeaders"]);
 
     // When errors
@@ -169,17 +176,21 @@ function convertUrlToUri(urlString) {
     //             break;
     //     }
     // });
-    function defineData(data,type){
-        if(type==="request")
-        {
-        requestHeader.push(data);
+    function defineData(data, type) {
+        if (type === "request") {
+
+            requestHeader.push(data);
+            bigData.request = requestHeader;
+        }
+        else if (type === "response") {
+            responseHeader.push(data)
+            bigData.response = responseHeader;
         }
     }
-    chrome.runtime.onMessage.addListener(function(msg, sender, sendResponse) {
+    chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
         console.log("Received %o from %o, frame", msg, sender.tab, sender.frameId);
         sendResponse("send response!");
-        if(msg.action==="save")
-        {
+        if (msg.action === "save") {
             exportObjectToJSONFile();
         }
     });
