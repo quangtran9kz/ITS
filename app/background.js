@@ -28,8 +28,9 @@ function exportObjectToJSONFile(){
      var url = 'data:application/json;base64,' + btoa(result);
      chrome.downloads.download({
          url: url,
-         filename: 'filename_of_exported_file.json'
+         filename: 'data.json'
      });
+     requestHeader.length=0;
 }
 // Convert URL String to URI Object {key : "value"} 
 /*
@@ -171,7 +172,7 @@ function convertUrlToUri(urlString) {
     function defineData(data,type){
         if(type==="request")
         {
-        console.log(data);
+        requestHeader.push(data);
         }
     }
     chrome.runtime.onMessage.addListener(function(msg, sender, sendResponse) {
@@ -179,7 +180,7 @@ function convertUrlToUri(urlString) {
         sendResponse("send response!");
         if(msg.action==="save")
         {
-            //button Save làm gì ???
+            exportObjectToJSONFile();
         }
     });
 }());
