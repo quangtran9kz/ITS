@@ -8,13 +8,68 @@
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json">
     <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico">
     <title> App</title>
+    <style>
+        .button {
+            background-color: #4CAF50; /* Green */
+            border: none;
+            color: white;
+            padding: 16px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            -webkit-transition-duration: 0.4s; /* Safari */
+            transition-duration: 0.4s;
+            cursor: pointer;
+        }
+        
+        .button1 {
+            background-color: white; 
+            color: black; 
+            border: 2px solid red;
+        }
+        
+        .button1:hover {
+            background-color: red;
+            color: white;
+        }
+        
+        .button2 {
+            background-color: white; 
+            color: black; 
+            border: 2px solid black;
+        }
+        
+        .button2:hover {
+            background-color: black;
+            color: white;
+        }
+        
+        .button3 {
+            background-color: white; 
+            color: black; 
+            border: 2px solid green;
+        }
+        
+        .button3:hover {
+            background-color: green;
+            color: white;
+        }
+        </style>
   </head>
-  <body>
+  <body style="height: 100px;  width: 500px;">
     <noscript>
       You need to enable JavaScript to run this app.
     </noscript>
-    <div id="root">
-      <button  id="save">Save</button>
+    <div id="root" style="align-content: center;">      
+      <button class="button button1" id="startRecording">Start Recording</button>
+      <img id="statusImage" src="stop-icon.png" style="width:100px">
+      <button class="button button2" id="stopRecording">Stop Recording</button>
+      <br>
+      <p align="center">
+          <button class="button button3" id="save">Save to JSON file</button>
+      </p>      
     </div>
     <script src="app/content.js" defer></script>
   </body>

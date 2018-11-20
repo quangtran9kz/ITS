@@ -23,6 +23,7 @@
 var requestHeader = [];
 var bigData = {};
 var responseHeader = [];
+var startRecording = false;
 function exportObjectToJSONFile() {
     // Convert object to a string.
     var result = JSON.stringify(bigData);
@@ -33,8 +34,8 @@ function exportObjectToJSONFile() {
         url: url,
         filename: 'data.json'
     });
-    requestHeader.length = 0;
-    responseHeader.length = 0;
+    // requestHeader.length = 0;
+    // responseHeader.length = 0;
 }
 // Convert URL String to URI Object {key : "value"} 
 /*
@@ -72,7 +73,9 @@ function filterResponseHeader(data) {
      filterData[e.name]=e.value;
     })
     console.log(filterData);
-    responseHeader.push(filterData);
+    if(startRecording){
+        responseHeader.push(filterData);
+    }    
 }
 (function () {
     const tabStorage = {};
@@ -195,8 +198,9 @@ function filterResponseHeader(data) {
     // });
     function defineData(data, type) {
         if (type === "request") {
-
-            requestHeader.push(data);
+            if(startRecording){
+                requestHeader.push(data);
+            }            
             bigData.request = requestHeader;
         }
         else if (type === "response") {
@@ -206,6 +210,12 @@ function filterResponseHeader(data) {
     chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
         console.log("Received %o from %o, frame", msg, sender.tab, sender.frameId);
         sendResponse("send response!");
+        if (msg.action === "startRecording") {
+            startRecording = true;
+        }
+        if (msg.action === "stopRecording") {
+            startRecording = false;
+        }
         if (msg.action === "save") {
             exportObjectToJSONFile();
         }
