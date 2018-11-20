@@ -1,12 +1,10 @@
 {
   "manifest_version": 2,
-
-  "name": "My Extension",
+  "name": "ITS Interceptor",
   "description": "This extension is capture HTTP request, response and paramerter.Then save all to file",
   "version": "0.0.1",
-
   "browser_action": {
-    "default_popup": "index.html",
+    "default_popup": "popup.html",
     "default_title": "Open the popup"
   },
   "icons": {
@@ -15,10 +13,21 @@
     "128": "logo.png"
   },
   "background": {
-    "scripts": ["app/background.js"]
+    "scripts": [
+      "app/background.js"
+    ]
   },
+  "content_scripts": [
+    {
+      "matches":["<all_urls>"],
+      "js":["app/content.js"]
+
+    }
+  ],
   "permissions": [
     "webRequest",
+    "webRequestBlocking",
+    "downloads",
     "<all_urls>"
   ]
 }
