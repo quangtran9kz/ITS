@@ -8,7 +8,10 @@ window.onload=()=>{
     var Save = document.getElementById("save");
     var startRecording = document.getElementById("startRecording");
     var stopRecording = document.getElementById("stopRecording");
-    var statusImage = document.getElementById("statusImage");
+    var statusImage = document.getElementById("statusImage");    
+    chrome.storage.local.get(['imageSrc'], function(result) {                
+        statusImage.src = result.imageSrc;
+    });
     try {
         // Export JSON file
         Save.onclick=()=>{

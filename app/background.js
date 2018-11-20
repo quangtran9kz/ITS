@@ -20,22 +20,22 @@
 *    
 */
 
-var requestHeader = [];
+
 var bigData = {};
-var responseHeader = [];
+var DataArr=[];
 var startRecording = false;
+chrome.storage.local.set({"imageSrc": "stop-icon.png"});
 function exportObjectToJSONFile() {
     // Convert object to a string.
+    bigData.request=DataArr;
     var result = JSON.stringify(bigData);
-
     // Save as file
     var url = 'data:application/json;base64,' + btoa(result);
     chrome.downloads.download({
         url: url,
         filename: 'data.json'
     });
-    // requestHeader.length = 0;
-    // responseHeader.length = 0;
+    DataArr.length=0;
 }
 // Convert URL String to URI Object {key : "value"} 
 /*
@@ -59,24 +59,6 @@ function convertUrlToUri(urlString) {
     }
 
 }
-function filterResponseHeader(data) {
-     var filterData = {};
-    // for (x in data) {
-    //     console.log(x);
-    //     let key = data[x].name;
-    //     let value = data[x].value;
-    //     filterData[key] = value;
-    //     console.log(filterData);
-    // }
-  var arr=Array.from(Object.keys(data),k=>data[k]);
-  arr.forEach((e)=>{
-     filterData[e.name]=e.value;
-    })
-    console.log(filterData);
-    if(startRecording){
-        responseHeader.push(filterData);
-    }    
-}
 (function () {
     const tabStorage = {};
     const networkFilters = {
@@ -86,7 +68,7 @@ function filterResponseHeader(data) {
     };
     // Capture HTTP request
     chrome.webRequest.onBeforeRequest.addListener((details) => {
-        const { tabId, requestId, url, timeStamp, method, type, frameId, parentFrameId } = details;
+        const { tabId, requestId, timeStamp } = details;
         if (!tabStorage.hasOwnProperty(tabId)) {
             return;
         }
@@ -94,8 +76,6 @@ function filterResponseHeader(data) {
         if (details.method == "POST") {
             try {
                 var data = details.requestBody.formData;
-                // console.log("Form Data:");
-                // console.log(data);
 
             } catch (error) {
                 console.log(error);
@@ -104,61 +84,59 @@ function filterResponseHeader(data) {
         }
         // Capture HTTP request, action method = GET
         tabStorage[tabId].requests[requestId] = {
-            requestId: requestId,
-            method: method,
-            type: type,
-            frameId: frameId,
-            url: url,
             startTime: timeStamp,
-            parentFrameId: parentFrameId,
-            status: 'pending',
-            postdata: data
+            requestId: requestId,
+            postdata: data !== undefined ? data : "none"
         };
-        // split URL
-        var urlString = tabStorage[tabId].requests[requestId].url;
-        //console.log("URL:");
-        // console.log(typeof (urlString));
-        //console.log(urlString);
-        //var parameters = {};
-        //parameters = convertUrlToUri(urlString)!=undefined?convertUrlToUri(urlString):"none";
-        //console.log("Request infomation:");
-        //console.log(tabStorage[tabId].requests[requestId]);
-        //console.log(paraArray);
-        //console.log("Parameters:");
-        //console.log(parameters);
-        //var items = { "key": "1", "key2":"2"};
-        // exportObjectToJSONFile(items);
-        defineData(tabStorage[tabId].requests[requestId], "request");
-
     }, networkFilters, ["requestBody"]);
 
+    chrome.webRequest.onBeforeSendHeaders.addListener(
+        (details) => {
+            const { tabId, requestId, requestHeaders } = details;
+            try {
+                Object.assign(tabStorage[tabId].requests[requestId], {
+                    Headers: requestHeaders
+                })
+            } catch (error) {
+
+            }
+        },
+        networkFilters,
+        ["requestHeaders"]);
+        chrome.webRequest.onSendHeaders.addListener((details)=>{
+            let a={...details};
+            console.log(a);
+        },networkFilters,["requestHeaders"])
     chrome.webRequest.onCompleted.addListener((details) => {
-        const { tabId, requestId, timeStamp, responseHeaders } = details;
+        const { tabId, requestId, timeStamp, responseHeaders, url, method, type, frameId, parentFrameId } = details;
         if (!tabStorage.hasOwnProperty(tabId) || !tabStorage[tabId].requests.hasOwnProperty(requestId)) {
             return;
         }
+        let source = { ...details };
         let response = { ...responseHeaders };
-        //console.log("Response Header:");
-        //console.log(response);
-        const request = tabStorage[tabId].requests[requestId];
-
-        Object.assign(request, {
+        Object.assign(tabStorage[tabId].requests[requestId], {
+            url: url,
+            method: method,
+            type: type,
+            frameId: frameId,
+            parentFrameId: parentFrameId,
+            responseHeader: source.responseHeaders,
+            Ip: source.ip,
+            initiator: source.initiator,
+            statusLine: source.statusLine,
             endTime: timeStamp,
-            requestDuration: timeStamp - request.startTime,
+            requestDuration: timeStamp - tabStorage[tabId].requests[requestId].startTime,
             status: 'complete'
         });
-        //console.log(tabStorage[tabId].requests[details.requestId]);
-        filterResponseHeader(response);
-        defineData(response, "response");
+        console.log(tabStorage[tabId].requests[requestId]);
+        defineData(tabStorage[tabId].requests[requestId]);
     }, networkFilters, ["responseHeaders"]);
-
     // When errors
     chrome.webRequest.onErrorOccurred.addListener((details) => {
         const { tabId, requestId, timeStamp } = details;
         if (!tabStorage.hasOwnProperty(tabId) || !tabStorage[tabId].requests.hasOwnProperty(requestId)) {
             return;
         }
-
         const request = tabStorage[tabId].requests[requestId];
         Object.assign(request, {
             endTime: timeStamp,
@@ -185,26 +163,9 @@ function filterResponseHeader(data) {
         }
         tabStorage[tabId] = null;
     });
-
-    // chrome.runtime.onMessage.addListener((msg, sender, response) => {
-    //     switch (msg.type) {
-    //         case 'popupInit':
-    //             response(tabStorage[msg.tabId]);
-    //             break;
-    //         default:
-    //             response('unknown request');
-    //             break;
-    //     }
-    // });
-    function defineData(data, type) {
-        if (type === "request") {
-            if(startRecording){
-                requestHeader.push(data);
-            }            
-            bigData.request = requestHeader;
-        }
-        else if (type === "response") {
-            bigData.response = responseHeader;
+    function defineData(data) {
+        if (startRecording) {
+            DataArr.push(data);
         }
     }
     chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
@@ -212,12 +173,15 @@ function filterResponseHeader(data) {
         sendResponse("send response!");
         if (msg.action === "startRecording") {
             startRecording = true;
+            chrome.storage.local.set({"imageSrc": "Record-Pressed-icon.png"});
         }
         if (msg.action === "stopRecording") {
             startRecording = false;
+            chrome.storage.local.set({"imageSrc": "stop-icon.png"});
         }
         if (msg.action === "save") {
-            exportObjectToJSONFile();
+           // console.log(bigData);
+             exportObjectToJSONFile();
         }
     });
 }());

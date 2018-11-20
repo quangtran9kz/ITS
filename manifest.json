@@ -28,6 +28,7 @@
     "webRequest",
     "webRequestBlocking",
     "downloads",
+    "storage",
     "<all_urls>"
   ]
 }
