@@ -21,8 +21,9 @@
 */
 
 var requestHeader = [];
-var bigData={};
+var bigData = {};
 var responseHeader = [];
+var startRecording = false;
 function exportObjectToJSONFile() {
     // Convert object to a string.
     var result = JSON.stringify(bigData);
@@ -33,8 +34,8 @@ function exportObjectToJSONFile() {
         url: url,
         filename: 'data.json'
     });
-    requestHeader.length = 0;
-    responseHeader.length=0;
+    // requestHeader.length = 0;
+    // responseHeader.length = 0;
 }
 // Convert URL String to URI Object {key : "value"} 
 /*
@@ -58,6 +59,24 @@ function convertUrlToUri(urlString) {
     }
 
 }
+function filterResponseHeader(data) {
+     var filterData = {};
+    // for (x in data) {
+    //     console.log(x);
+    //     let key = data[x].name;
+    //     let value = data[x].value;
+    //     filterData[key] = value;
+    //     console.log(filterData);
+    // }
+  var arr=Array.from(Object.keys(data),k=>data[k]);
+  arr.forEach((e)=>{
+     filterData[e.name]=e.value;
+    })
+    console.log(filterData);
+    if(startRecording){
+        responseHeader.push(filterData);
+    }    
+}
 (function () {
     const tabStorage = {};
     const networkFilters = {
@@ -76,7 +95,7 @@ function convertUrlToUri(urlString) {
             try {
                 var data = details.requestBody.formData;
                 // console.log("Form Data:");
-                 console.log(data);
+                // console.log(data);
 
             } catch (error) {
                 console.log(error);
@@ -93,7 +112,7 @@ function convertUrlToUri(urlString) {
             startTime: timeStamp,
             parentFrameId: parentFrameId,
             status: 'pending',
-            postdata:data
+            postdata: data
         };
         // split URL
         var urlString = tabStorage[tabId].requests[requestId].url;
@@ -119,8 +138,8 @@ function convertUrlToUri(urlString) {
             return;
         }
         let response = { ...responseHeaders };
-        console.log("Response Header:");
-        console.log(response);
+        //console.log("Response Header:");
+        //console.log(response);
         const request = tabStorage[tabId].requests[requestId];
 
         Object.assign(request, {
@@ -128,8 +147,9 @@ function convertUrlToUri(urlString) {
             requestDuration: timeStamp - request.startTime,
             status: 'complete'
         });
-        console.log(tabStorage[tabId].requests[details.requestId]);
-        defineData(response,"response");
+        //console.log(tabStorage[tabId].requests[details.requestId]);
+        filterResponseHeader(response);
+        defineData(response, "response");
     }, networkFilters, ["responseHeaders"]);
 
     // When errors
@@ -178,18 +198,24 @@ function convertUrlToUri(urlString) {
     // });
     function defineData(data, type) {
         if (type === "request") {
-
-            requestHeader.push(data);
+            if(startRecording){
+                requestHeader.push(data);
+            }            
             bigData.request = requestHeader;
         }
         else if (type === "response") {
-            responseHeader.push(data)
             bigData.response = responseHeader;
         }
     }
     chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
         console.log("Received %o from %o, frame", msg, sender.tab, sender.frameId);
         sendResponse("send response!");
+        if (msg.action === "startRecording") {
+            startRecording = true;
+        }
+        if (msg.action === "stopRecording") {
+            startRecording = false;
+        }
         if (msg.action === "save") {
             exportObjectToJSONFile();
         }
