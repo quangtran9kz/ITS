@@ -23,7 +23,7 @@
 var requestHeader = [];
 var bigData = {};
 var responseHeader = [];
-var startRecording = false;
+var startRecording = true;
 function exportObjectToJSONFile() {
     // Convert object to a string.
     var result = JSON.stringify(bigData);
@@ -112,7 +112,7 @@ function filterResponseHeader(data) {
             startTime: timeStamp,
             parentFrameId: parentFrameId,
             status: 'pending',
-            postdata: data
+            postdata: data !==undefined ? data : "none"
         };
         // split URL
         var urlString = tabStorage[tabId].requests[requestId].url;
@@ -137,17 +137,22 @@ function filterResponseHeader(data) {
         if (!tabStorage.hasOwnProperty(tabId) || !tabStorage[tabId].requests.hasOwnProperty(requestId)) {
             return;
         }
+        let  source={...details};
         let response = { ...responseHeaders };
-        //console.log("Response Header:");
-        //console.log(response);
         const request = tabStorage[tabId].requests[requestId];
 
         Object.assign(request, {
+            responseHeader:source.responseHeaders,
+            Ip:source.ip,
+            initiator:source.initiator,
+            statusLine:source.statusLine,
             endTime: timeStamp,
             requestDuration: timeStamp - request.startTime,
             status: 'complete'
         });
-        //console.log(tabStorage[tabId].requests[details.requestId]);
+        console.log(source);
+        console.log(request);
+
         filterResponseHeader(response);
         defineData(response, "response");
     }, networkFilters, ["responseHeaders"]);
@@ -158,7 +163,6 @@ function filterResponseHeader(data) {
         if (!tabStorage.hasOwnProperty(tabId) || !tabStorage[tabId].requests.hasOwnProperty(requestId)) {
             return;
         }
-
         const request = tabStorage[tabId].requests[requestId];
         Object.assign(request, {
             endTime: timeStamp,
