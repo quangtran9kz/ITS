@@ -42,7 +42,6 @@
             requestId: requestId,
             postdata: data !== undefined ? data : "none"
         };
-        loadDoc(method,url);
     }, networkFilters, ["requestBody"]);
 
     chrome.webRequest.onBeforeSendHeaders.addListener(
