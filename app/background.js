@@ -94,7 +94,7 @@ function convertUrlToUri(urlString) {
             const { tabId, requestId, requestHeaders } = details;
             try {
                 Object.assign(tabStorage[tabId].requests[requestId], {
-                    Headers: requestHeaders
+                    headers: requestHeaders
                 })
             } catch (error) {
 
@@ -102,17 +102,12 @@ function convertUrlToUri(urlString) {
         },
         networkFilters,
         ["requestHeaders"]);
-        chrome.webRequest.onSendHeaders.addListener((details)=>{
-            let a={...details};
-            console.log(a);
-        },networkFilters,["requestHeaders"])
     chrome.webRequest.onCompleted.addListener((details) => {
-        const { tabId, requestId, timeStamp, responseHeaders, url, method, type, frameId, parentFrameId } = details;
+        const { tabId, requestId, timeStamp, url, method, type, frameId, parentFrameId } = details;
         if (!tabStorage.hasOwnProperty(tabId) || !tabStorage[tabId].requests.hasOwnProperty(requestId)) {
             return;
         }
         let source = { ...details };
-        let response = { ...responseHeaders };
         Object.assign(tabStorage[tabId].requests[requestId], {
             url: url,
             method: method,
@@ -132,16 +127,24 @@ function convertUrlToUri(urlString) {
     }, networkFilters, ["responseHeaders"]);
     // When errors
     chrome.webRequest.onErrorOccurred.addListener((details) => {
-        const { tabId, requestId, timeStamp } = details;
+        const { tabId, requestId, timeStamp ,frameId,method,error,parentFrameId,type,ip,initiator,url} = details;
         if (!tabStorage.hasOwnProperty(tabId) || !tabStorage[tabId].requests.hasOwnProperty(requestId)) {
             return;
         }
         const request = tabStorage[tabId].requests[requestId];
-        Object.assign(request, {
-            endTime: timeStamp,
+        Object.assign(tabStorage[tabId].requests[requestId], {
+            url: url,
+            method: method,
+            type: type,
+            frameId: frameId,
+            parentFrameId: parentFrameId,
+            Ip: ip,
+            initiator: initiator,
+             endTime: timeStamp,
             status: 'error',
+            error:error
         });
-        console.log(tabStorage[tabId].requests[requestId]);
+        defineData(tabStorage[tabId].requests[requestId]);
     }, networkFilters);
 
     chrome.tabs.onActivated.addListener((tab) => {
@@ -177,7 +180,6 @@ function convertUrlToUri(urlString) {
             startRecording = false;
         }
         if (msg.action === "save") {
-           // console.log(bigData);
              exportObjectToJSONFile();
         }
     });
