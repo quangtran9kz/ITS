@@ -5,20 +5,20 @@
             "<all_urls>"
         ]
     };
-    var bigData = {};
-    var DataArr = [];
-    var startRecording = true;
+    var bigdata = {};
+    var dataarr = [];
+    var startRecording = false;
     function exportObjectToJSONFile() {
         // Convert object to a string.
-        bigData.request = DataArr;
-        var result = JSON.stringify(bigData);
+        bigdata.request = dataarr;
+        var result = JSON.stringify(bigdata);
         // Save as file
         var url = 'data:application/json;base64,' + btoa(result);
         chrome.downloads.download({
             url: url,
             filename: 'data.json'
         });
-        DataArr.length = 0;
+        dataarr.length = 0;
     }
     // Capture HTTP request
     chrome.webRequest.onBeforeRequest.addListener((details) => {
@@ -34,7 +34,6 @@
             } catch (error) {
                 console.log(error);
             }
-
         }
         // Capture HTTP request, action method = GET
         tabStorage[tabId].requests[requestId] = {
@@ -42,6 +41,7 @@
             requestId: requestId,
             postdata: data !== undefined ? data : "none"
         };
+        captureResponse(method,url);
     }, networkFilters, ["requestBody"]);
 
     chrome.webRequest.onBeforeSendHeaders.addListener(
@@ -77,7 +77,7 @@
             requestDuration: timeStamp - tabStorage[tabId].requests[requestId].startTime,
             status: 'complete'
         });
-        console.log(tabStorage[tabId].requests[requestId]);
+        //console.log(tabStorage[tabId].requests[requestId]);
         defineData(tabStorage[tabId].requests[requestId]);
     }, networkFilters, ["responseHeaders"]);
     // When errors
@@ -122,7 +122,7 @@
     });
     function defineData(data) {
         if (startRecording) {
-            DataArr.push(data);
+            dataarr.push(data);
         }
     }
     chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
