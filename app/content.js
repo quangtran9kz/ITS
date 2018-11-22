@@ -16,12 +16,12 @@ window.onload=()=>{
         };
         // Start Recording
         startRecording.onclick=()=>{
-            statusImage.src = "Record-Pressed-icon.png";
+            statusImage.src = "image/Record-Pressed-icon.png";
             chrome.runtime.sendMessage({action:"startRecording"})
         };
         // Stop Recording
         stopRecording.onclick=()=>{
-            statusImage.src = "stop-icon.png";
+            statusImage.src = "image/stop-icon.jpg";
             chrome.runtime.sendMessage({action:"stopRecording"})
         };
     } catch (error) {   

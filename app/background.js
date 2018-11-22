@@ -1,63 +1,3 @@
-/**************************************************************/
-// User story: 
-/**************************************************************/
-/*
-// As a developer, 
-// I want to capture HTTP request. 
-// So that export parameters of http request 
-//  into JSON file follow structure define by myself.
-*/
-
-// **********************************************************//
-// ****************** Helper functions **********************//
-// **********************************************************//
-
-// Export objects {key: "value"} to JSON file
-/*
-* Input: Object with format JSON {key: "value", key: "value"}
-* Parameters: None
-* Output: JSON file
-*    
-*/
-
-
-var bigData = {};
-var DataArr=[];
-var startRecording = true;
-function exportObjectToJSONFile() {
-    // Convert object to a string.
-    bigData.request=DataArr;
-    var result = JSON.stringify(bigData);
-    // Save as file
-    var url = 'data:application/json;base64,' + btoa(result);
-    chrome.downloads.download({
-        url: url,
-        filename: 'data.json'
-    });
-    DataArr.length=0;
-}
-// Convert URL String to URI Object {key : "value"} 
-/*
-* Input: URL
-* Parameters: URL string
-* Output: Object JSON {key1: "value1", key2: "value2"}
-*
-*/
-function convertUrlToUri(urlString) {
-    try {
-        var paraArray = urlString.split("?")[1].split("&");
-        var uri = {};
-        for (let para = 0; para < paraArray.length; para++) {
-            let key = paraArray[para].split("=")[0];
-            let value = paraArray[para].split("=")[1];
-            uri[key] = value;
-        }
-        return uri;
-    } catch (error) {
-        return;
-    }
-
-}
 (function () {
     const tabStorage = {};
     const networkFilters = {
@@ -65,9 +5,24 @@ function convertUrlToUri(urlString) {
             "<all_urls>"
         ]
     };
+    var bigData = {};
+    var DataArr = [];
+    var startRecording = true;
+    function exportObjectToJSONFile() {
+        // Convert object to a string.
+        bigData.request = DataArr;
+        var result = JSON.stringify(bigData);
+        // Save as file
+        var url = 'data:application/json;base64,' + btoa(result);
+        chrome.downloads.download({
+            url: url,
+            filename: 'data.json'
+        });
+        DataArr.length = 0;
+    }
     // Capture HTTP request
     chrome.webRequest.onBeforeRequest.addListener((details) => {
-        const { tabId, requestId, timeStamp } = details;
+        const { url,method,tabId, requestId, timeStamp } = details;
         if (!tabStorage.hasOwnProperty(tabId)) {
             return;
         }
@@ -87,6 +42,7 @@ function convertUrlToUri(urlString) {
             requestId: requestId,
             postdata: data !== undefined ? data : "none"
         };
+        loadDoc(method,url);
     }, networkFilters, ["requestBody"]);
 
     chrome.webRequest.onBeforeSendHeaders.addListener(
@@ -127,7 +83,7 @@ function convertUrlToUri(urlString) {
     }, networkFilters, ["responseHeaders"]);
     // When errors
     chrome.webRequest.onErrorOccurred.addListener((details) => {
-        const { tabId, requestId, timeStamp ,frameId,method,error,parentFrameId,type,ip,initiator,url} = details;
+        const { tabId, requestId, timeStamp, frameId, method, error, parentFrameId, type, ip, initiator, url } = details;
         if (!tabStorage.hasOwnProperty(tabId) || !tabStorage[tabId].requests.hasOwnProperty(requestId)) {
             return;
         }
@@ -140,9 +96,9 @@ function convertUrlToUri(urlString) {
             parentFrameId: parentFrameId,
             Ip: ip,
             initiator: initiator,
-             endTime: timeStamp,
+            endTime: timeStamp,
             status: 'error',
-            error:error
+            error: error
         });
         defineData(tabStorage[tabId].requests[requestId]);
     }, networkFilters);
@@ -180,7 +136,7 @@ function convertUrlToUri(urlString) {
             startRecording = false;
         }
         if (msg.action === "save") {
-             exportObjectToJSONFile();
+            exportObjectToJSONFile();
         }
     });
 }());
