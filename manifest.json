@@ -8,9 +8,9 @@
     "default_title": "Open the popup"
   },
   "icons": {
-    "16": "logo.png",
-    "48": "logo.png",
-    "128": "logo.png"
+    "16": "image/logo.png",
+    "48": "image/logo.png",
+    "128": "image/logo.png"
   },
   "background": {
     "scripts": [
@@ -28,6 +28,7 @@
     "webRequest",
     "webRequestBlocking",
     "downloads",
+    "storage",
     "<all_urls>"
   ]
 }

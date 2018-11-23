@@ -1,63 +1,4 @@
-/**************************************************************/
-// User story: 
-/**************************************************************/
-/*
-// As a developer, 
-// I want to capture HTTP request. 
-// So that export parameters of http request 
-//  into JSON file follow structure define by myself.
-*/
 
-// **********************************************************//
-// ****************** Helper functions **********************//
-// **********************************************************//
-
-// Export objects {key: "value"} to JSON file
-/*
-* Input: Object with format JSON {key: "value", key: "value"}
-* Parameters: None
-* Output: JSON file
-*    
-*/
-
-
-var bigData = {};
-var DataArr=[];
-var startRecording = true;
-function exportObjectToJSONFile() {
-    // Convert object to a string.
-    bigData.request=DataArr;
-    var result = JSON.stringify(bigData);
-    // Save as file
-    var url = 'data:application/json;base64,' + btoa(result);
-    chrome.downloads.download({
-        url: url,
-        filename: 'data.json'
-    });
-    DataArr.length=0;
-}
-// Convert URL String to URI Object {key : "value"} 
-/*
-* Input: URL
-* Parameters: URL string
-* Output: Object JSON {key1: "value1", key2: "value2"}
-*
-*/
-function convertUrlToUri(urlString) {
-    try {
-        var paraArray = urlString.split("?")[1].split("&");
-        var uri = {};
-        for (let para = 0; para < paraArray.length; para++) {
-            let key = paraArray[para].split("=")[0];
-            let value = paraArray[para].split("=")[1];
-            uri[key] = value;
-        }
-        return uri;
-    } catch (error) {
-        return;
-    }
-
-}
 (function () {
     const tabStorage = {};
     const networkFilters = {
@@ -65,9 +6,47 @@ function convertUrlToUri(urlString) {
             "<all_urls>"
         ]
     };
+    chrome.storage.local.set({"imageSrc": "../image/stop-icon.jpg"});
+    var bigData = {};
+    var dataArr = [];
+    var startRecording = false;
+
+    function captureResponseContent(method, url, data) {
+        var xhttp = new XMLHttpRequest();
+        xhttp.open(method, url, true);
+        xhttp.addEventListener('load', function () {
+            try {
+                if (this.readyState == 4 && this.status == 200 && this.getResponseHeader("content-type").search("json") !== -1) {
+                    Object.assign(tabStorage[data.tabId].requests[data.requestId], {
+                        responseData: JSON.parse(this.responseText)
+                    })
+                }
+            } catch (error) {
+            }
+        });
+        xhttp.send();
+    }
+    function exportObjectToJSONFile() {
+        // Convert object to a string.
+        bigData.request = dataArr;
+        var result = JSON.stringify(bigData);
+        // Save as file
+        try {
+            var url = 'data:application/json;base64,' + btoa(unescape(encodeURIComponent((result))));
+            chrome.downloads.download({
+                url: url,
+                filename: 'data.json'
+            });
+            dataArr.length = 0;
+        } catch (error) {
+            console.log(error);
+
+        }
+    }
     // Capture HTTP request
     chrome.webRequest.onBeforeRequest.addListener((details) => {
-        const { tabId, requestId, timeStamp } = details;
+        const { url, method, tabId, requestId, timeStamp } = details;
+        let store = { ...details };
         if (!tabStorage.hasOwnProperty(tabId)) {
             return;
         }
@@ -79,7 +58,6 @@ function convertUrlToUri(urlString) {
             } catch (error) {
                 console.log(error);
             }
-
         }
         // Capture HTTP request, action method = GET
         tabStorage[tabId].requests[requestId] = {
@@ -87,6 +65,7 @@ function convertUrlToUri(urlString) {
             requestId: requestId,
             postdata: data !== undefined ? data : "none"
         };
+        captureResponseContent(method, url, store);
     }, networkFilters, ["requestBody"]);
 
     chrome.webRequest.onBeforeSendHeaders.addListener(
@@ -94,7 +73,7 @@ function convertUrlToUri(urlString) {
             const { tabId, requestId, requestHeaders } = details;
             try {
                 Object.assign(tabStorage[tabId].requests[requestId], {
-                    Headers: requestHeaders
+                    headers: requestHeaders
                 })
             } catch (error) {
 
@@ -102,17 +81,13 @@ function convertUrlToUri(urlString) {
         },
         networkFilters,
         ["requestHeaders"]);
-        chrome.webRequest.onSendHeaders.addListener((details)=>{
-            let a={...details};
-            console.log(a);
-        },networkFilters,["requestHeaders"])
+
     chrome.webRequest.onCompleted.addListener((details) => {
-        const { tabId, requestId, timeStamp, responseHeaders, url, method, type, frameId, parentFrameId } = details;
+        const { tabId, requestId, timeStamp, url, method, type, frameId, parentFrameId } = details;
         if (!tabStorage.hasOwnProperty(tabId) || !tabStorage[tabId].requests.hasOwnProperty(requestId)) {
             return;
         }
         let source = { ...details };
-        let response = { ...responseHeaders };
         Object.assign(tabStorage[tabId].requests[requestId], {
             url: url,
             method: method,
@@ -127,21 +102,30 @@ function convertUrlToUri(urlString) {
             requestDuration: timeStamp - tabStorage[tabId].requests[requestId].startTime,
             status: 'complete'
         });
-        console.log(tabStorage[tabId].requests[requestId]);
         defineData(tabStorage[tabId].requests[requestId]);
+        console.log(tabStorage[tabId].requests[requestId]);
+        console.log(startRecording);
     }, networkFilters, ["responseHeaders"]);
     // When errors
     chrome.webRequest.onErrorOccurred.addListener((details) => {
-        const { tabId, requestId, timeStamp } = details;
+        const { tabId, requestId, timeStamp, frameId, method, error, parentFrameId, type, ip, initiator, url } = details;
         if (!tabStorage.hasOwnProperty(tabId) || !tabStorage[tabId].requests.hasOwnProperty(requestId)) {
             return;
         }
         const request = tabStorage[tabId].requests[requestId];
-        Object.assign(request, {
+        Object.assign(tabStorage[tabId].requests[requestId], {
+            url: url,
+            method: method,
+            type: type,
+            frameId: frameId,
+            parentFrameId: parentFrameId,
+            Ip: ip,
+            initiator: initiator,
             endTime: timeStamp,
             status: 'error',
+            error: error
         });
-        console.log(tabStorage[tabId].requests[requestId]);
+        defineData(tabStorage[tabId].requests[requestId]);
     }, networkFilters);
 
     chrome.tabs.onActivated.addListener((tab) => {
@@ -164,7 +148,7 @@ function convertUrlToUri(urlString) {
     });
     function defineData(data) {
         if (startRecording) {
-            DataArr.push(data);
+            dataArr.push(data);
         }
     }
     chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
@@ -172,11 +156,13 @@ function convertUrlToUri(urlString) {
         sendResponse("send response!");
         if (msg.action === "startRecording") {
             startRecording = true;
+            chrome.storage.local.set({"imageSrc": "../image/Record-Pressed-icon.png"});
         }
         if (msg.action === "stopRecording") {
             startRecording = false;
+            chrome.storage.local.set({"imageSrc": "../image/stop-icon.jpg"});
         }
-        if (msg.action === "save") {
+        if (msg.action === "save" && startRecording==true) {
            // console.log(bigData);
              exportObjectToJSONFile();
         }
