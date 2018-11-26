@@ -1,51 +1,115 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+
+<head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="theme-color" content="#000000">
-  
+
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json">
     <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico">
     <title> App</title>
     <style>
-    
-        p{
+        body {
+            margin: 0;
+            padding: 20px;
+        }
+
+        p {
             margin: 0;
         }
-       #save{
-           width: 23%;
-       }
-       #startRecording{
-           width: 24%;
-       }
-       #stopRecording{
-           width: 25%;
-       }
-       #root{
-           width: 170px;
-           text-align: center;
-           margin: 0;
-       }
-       #statusImage{
-           width: 60px;
-       }
+
+        #list {
+            float: left;
+            margin: 0;
+            width: 50%;
+        }
+
+        #save img {
+            width: 50px;
+            height: 50px;
+        }
+
+      #startRecording img {
+           width: 50px;
+        }
+
+        #stopRecording img {
+            width: 50px;
+        }
+
+        #root {
+            text-align: center;
+            margin: 0;
+        }
+
+        td:first-child {
+            max-width: 100px;
+            word-wrap: break-word;
+        }
+
+        td {
+            width: 50px;
+        }
+
+        #statusImage {
+            width: 50px;
+        }
+
+        ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        li {
+            float: left;
+            margin-left: 20px;
+        }
+
+        li a {
+            display: block;
+            color: white;
+            text-align: center;
+        }
     </style>
-  </head>
-  <body >
+</head>
+
+<body id="body">
     <noscript>
-      You need to enable JavaScript to run this app.
+        You need to enable JavaScript to run this app.
     </noscript>
-    <div id="root" style="align-content: center;">      
-      <img  id="startRecording" src="image/start.jpg">
-      <img id="statusImage" src="image/stop-icon.jpg">
-      <img id="stopRecording" src="image/pause.svg">
-      <br>
-      <p align="center">
-          <img id="save" src="image/save.png">
-      </p>      
+    <div id="root">
+        <ul>
+            <li>
+                <a id="startRecording">
+                    <img  src="image/start.png">
+                </a>
+            </li>
+            <li>
+                <a>
+                    <img id="statusImage" src="image/stop-icon.png">
+                </a>
+            </li>
+            <li>
+                <a id="stopRecording">
+                    <img  src="image/stop.png">
+                </a>
+            </li>
+            <li>
+                <a id="save">
+                    <img  src="image/save.png">
+                </a>
+            </li>
+        </ul>
+        <br>
+        <table style="width: 300px" border="1" id="datatable">
+        </table>
+
     </div>
-<!-- Phải để trước tag đóng body mới chạy!!! -->
+    <!-- Phải để trước tag đóng body mới chạy!!! -->
     <script src="app/popup.js" defer></script>
-  </body>
+</body>
+
 </html>

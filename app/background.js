@@ -6,11 +6,11 @@
             "<all_urls>"
         ]
     };
-    chrome.storage.local.set({"imageSrc": "../image/stop-icon.jpg"});
+    chrome.storage.local.set({"imageSrc": "../image/stop-icon.png"});
     var bigData = {};
     var dataArr = [];
     var startRecording = false;
-
+ 
     function captureResponseContent(method, url, data) {
         var xhttp = new XMLHttpRequest();
         xhttp.open(method, url, true);
@@ -45,8 +45,8 @@
     }
     // Capture HTTP request
     chrome.webRequest.onBeforeRequest.addListener((details) => {
-        const { url, method, tabId, requestId, timeStamp } = details;
-        let store = { ...details };
+        const { method, url, tabId, requestId, timeStamp } = details;
+        let store={...details};
         if (!tabStorage.hasOwnProperty(tabId)) {
             return;
         }
@@ -75,13 +75,14 @@
                 Object.assign(tabStorage[tabId].requests[requestId], {
                     headers: requestHeaders
                 })
+                
             } catch (error) {
 
             }
+             
         },
         networkFilters,
         ["requestHeaders"]);
-
     chrome.webRequest.onCompleted.addListener((details) => {
         const { tabId, requestId, timeStamp, url, method, type, frameId, parentFrameId } = details;
         if (!tabStorage.hasOwnProperty(tabId) || !tabStorage[tabId].requests.hasOwnProperty(requestId)) {
@@ -103,8 +104,6 @@
             status: 'complete'
         });
         defineData(tabStorage[tabId].requests[requestId]);
-        console.log(tabStorage[tabId].requests[requestId]);
-        console.log(startRecording);
     }, networkFilters, ["responseHeaders"]);
     // When errors
     chrome.webRequest.onErrorOccurred.addListener((details) => {
@@ -148,24 +147,25 @@
     });
     function defineData(data) {
         if (startRecording) {
+            chrome.runtime.sendMessage({data:data});
             dataArr.push(data);
         }
     }
     chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
         console.log("Received %o from %o, frame", msg, sender.tab, sender.frameId);
-        sendResponse("send response!");
+        sendResponse("Send response!");
         if (msg.action === "startRecording") {
             startRecording = true;
             chrome.storage.local.set({"imageSrc": "../image/Record-Pressed-icon.png"});
         }
         if (msg.action === "stopRecording") {
             startRecording = false;
-            chrome.storage.local.set({"imageSrc": "../image/stop-icon.jpg"});
+            chrome.storage.local.set({"imageSrc": "../image/stop-icon.png"});
         }
         if (msg.action === "save" && startRecording==true) {
-           // console.log(bigData);
              exportObjectToJSONFile();
         }
     });
+    
 }());
 
